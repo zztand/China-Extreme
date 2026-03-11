@@ -13,7 +13,7 @@ workdata_model$yield <- log(workdata_model$yield)
 
 fixest_form <- yield ~ tavg + rain + rain2 + radn + 
   hdd + drog + dh + 
-  cdd + hr + lyy + wl +
+  cdd + hr + crd + wl +
   i(cnty, year_num) | cnty
 model <- feols(fixest_form, data = workdata_model, cluster = ~cnty)
 save(model,file = "maize_model-logY.RData")
@@ -22,7 +22,7 @@ data.frame(model$coefficients[1:11])
 
 workdata_model$predict_yield <- predict(model)
 
-# ¼ÆËãNRMSE (¼ÙÉèyieldºÍpredict_yieldÊÇÔ­Ê¼Öµ£¬Î´È¡Ö¸Êý)
+# è®¡ç®—NRMSE (å‡è®¾yieldå’Œpredict_yieldæ˜¯åŽŸå§‹å€¼ï¼Œæœªå–æŒ‡æ•°)
 nrmse <- function(actual, predicted) {
   rmse <- sqrt(mean((actual - predicted)^2, na.rm = TRUE))
   nrmse <- 100 * rmse / mean(actual, na.rm = TRUE)
@@ -32,10 +32,10 @@ nrmse_value <- nrmse(exp(workdata_model$yield), exp(workdata_model$predict_yield
 ggplot(workdata_model, aes(x = exp(predict_yield), y = exp(yield))) +
   geom_point(alpha = 0.6, color = "gray") +
   geom_abline(intercept = 0, slope = 1, color = "red", linetype = "dashed", linewidth = 0.8) +
-  annotate("text", x = 10000, y = 2000,  # µ÷Õû±ê×¢Î»ÖÃ
+  annotate("text", x = 10000, y = 2000,  # è°ƒæ•´æ ‡æ³¨ä½ç½®
            label = paste("NRMSE =", round(nrmse_value, 3)),
            size = 5, color = "darkgreen") +
-  scale_x_continuous(limits = c(0, 15000)) +  # Ê¹ÓÃÊýÑ§±í´ïÊ½
+  scale_x_continuous(limits = c(0, 15000)) +  # ä½¿ç”¨æ•°å­¦è¡¨è¾¾å¼
   scale_y_continuous(limits = c(0, 15000)) +
   coord_fixed(ratio = 1) +
   theme_bw(base_size = 12) +
@@ -51,7 +51,7 @@ setwd(workpath)
 
 load("maize_model-logY.RData")
 
-ext_vars <- c("hdd","drog","dh","cdd","lyy","wl","hr")
+ext_vars <- c("hdd","drog","dh","cdd","crd","wl","hr")
 ave_vars <- c("tavg","rain","radn")
 
 workdata_ori <- read.csv("maize_model_data.csv")
@@ -71,7 +71,7 @@ workdata_base <- summarise(workdata_base,
                            drog = quantile(drog,0.5,na.rm = T),
                            dh = quantile(dh,0.5,na.rm = T),
                            cdd = quantile(cdd,0.5,na.rm = T),
-                           lyy = quantile(lyy,0.5,na.rm = T),
+                           crd = quantile(crd,0.5,na.rm = T),
                            wl = quantile(wl,0.5,na.rm = T),
                            hr = quantile(hr,0.5,na.rm = T))
 
@@ -129,7 +129,7 @@ workdata <- mutate(workdata,
                    imp_drog = predict_yield - drog_yield,
                    imp_dh = predict_yield - dh_yield,
                    imp_cdd = predict_yield - cdd_yield,
-                   imp_lyy = predict_yield - lyy_yield,
+                   imp_crd = predict_yield - crd_yield,
                    imp_wl = predict_yield - wl_yield,
                    imp_hr = predict_yield - hr_yield
 )
@@ -151,7 +151,7 @@ result_year <- summarise(workdata,
                          imp_drog = mean(imp_drog),
                          imp_dh = mean(imp_dh),
                          imp_cdd = mean(imp_cdd),
-                         imp_lyy = mean(imp_lyy),
+                         imp_crd = mean(imp_crd),
                          imp_wl = mean(imp_wl),
                          imp_hr = mean(imp_hr))
 
@@ -180,7 +180,7 @@ workdata <- mutate(workdata,
                    imp_drog = predict_yield - drog_yield,
                    imp_dh = predict_yield - dh_yield,
                    imp_cdd = predict_yield - cdd_yield,
-                   imp_lyy = predict_yield - lyy_yield,
+                   imp_crd = predict_yield - crd_yield,
                    imp_wl = predict_yield - wl_yield,
                    imp_hr = predict_yield - hr_yield
 )
@@ -206,7 +206,7 @@ result_year <- summarise(workdata,
                          imp_drog = sum(imp_drog * ratio),
                          imp_dh = sum(imp_dh * ratio),
                          imp_cdd = sum(imp_cdd * ratio),
-                         imp_lyy = sum(imp_lyy * ratio),
+                         imp_crd = sum(imp_crd * ratio),
                          imp_wl = sum(imp_wl * ratio),
                          imp_hr = sum(imp_hr * ratio))
 write.csv(result_year,"imp_yearly_change_maize-logY.csv",row.names = F)
